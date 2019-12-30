@@ -1299,8 +1299,7 @@ static void ds_show_refs(RDisasmState *ds) {
 			r_io_read_at (ds->core->io, ref->at, buf, sizeof (buf));
 			r_anal_op (ds->core->anal, &aop, ref->at, buf, sizeof (buf), R_ANAL_OP_MASK_ALL);
 			if ((aop.type & R_ANAL_OP_TYPE_MASK) == R_ANAL_OP_TYPE_UCALL) {
-				RAnalFunction * fcn = r_anal_get_fcn_at (ds->core->anal,
-					ref->addr, R_ANAL_FCN_TYPE_NULL);
+				RAnalFunction * fcn = r_anal_function_get_at (ds->core->anal, ref->addr);
 				ds_begin_comment (ds);
 				if (fcn) {
 					ds_comment (ds, true, "; %s", fcn->name);
@@ -1441,7 +1440,7 @@ static void ds_show_xrefs(RDisasmState *ds) {
 					ds_comment (ds, false, "%s%s0x%"PFMT64x, it == addrs->head ? "" : ", ", plus, *addrptr);
 				}
 			}
-			if (realname && (!fun || r_anal_get_fcn_at (core->anal, ds->at, R_ANAL_FCN_TYPE_ROOT))) {
+			if (realname && (!fun || r_anal_function_get_at (core->anal, ds->at))) {
 				const char *pad = ds->show_comment_right ? "" : " ";
 				if (!ds->show_comment_right) {
 					ds_newline (ds);
@@ -2753,7 +2752,7 @@ static void ds_print_offset(RDisasmState *ds) {
 		unsigned int seggrn = r_config_get_i (core->config, "asm.seggrn");
 
 		if (ds->show_reloff) {
-			RAnalFunction *f = r_anal_get_fcn_at (core->anal, at, R_ANAL_FCN_TYPE_NULL);
+			RAnalFunction *f = r_anal_function_get_at (core->anal, at);
 			if (!f) {
 				f = fcnIn (ds, at, R_ANAL_FCN_TYPE_NULL); // r_anal_get_fcn_in (core->anal, at, R_ANAL_FCN_TYPE_NULL);
 			}
@@ -4678,7 +4677,7 @@ static void ds_print_esil_anal(RDisasmState *ds) {
 	case R_ANAL_OP_TYPE_JMP:
 		{
 			ut64 addr = ds->analop.jump;
-			if (!r_anal_get_fcn_at (ds->core->anal, addr, R_ANAL_FCN_TYPE_NULL)
+			if (!r_anal_function_get_at (ds->core->anal, addr)
 					&& !r_flag_get_at (core->flags, addr, false)) {
 				break;
 			}
@@ -4705,7 +4704,7 @@ static void ds_print_esil_anal(RDisasmState *ds) {
 					}
 				}
 			}
-			fcn = r_anal_get_fcn_at (core->anal, pcv, 0);
+			fcn = r_anal_function_get_at (core->anal, pcv);
 			if (fcn) {
 				fcn_name = fcn->name;
 			} else {
@@ -5045,7 +5044,7 @@ static char *ds_sub_jumps(RDisasmState *ds, char *str) {
 	}
 	ut64 addr = ds->analop.jump;
 
-	RAnalFunction *fcn = r_anal_get_fcn_at (anal, addr, 0);
+	RAnalFunction *fcn = r_anal_function_get_at (anal, addr);
 	if (fcn) {
 		if (!set_jump_demangled_name (ds, addr, &kw, &name)) {
 			name = fcn->name;
@@ -5452,7 +5451,7 @@ toro:
 		if (fcn) {
 			RAnalBlock *bb = r_anal_fcn_bbget_in (core->anal, fcn, ds->at);
 			if (!bb) {
-				fcn = r_anal_get_fcn_at (core->anal, ds->at, 0);
+				fcn = r_anal_function_get_at (core->anal, ds->at);
 				if (fcn) {
 					bb = r_anal_fcn_bbget_in (core->anal, fcn, ds->at);
 				}
